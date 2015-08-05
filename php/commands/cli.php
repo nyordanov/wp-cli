@@ -183,14 +183,28 @@ class CLI_Command extends WP_CLI_Command {
 
 		$mode = fileperms( $old_phar ) & 511;
 
+		$debug = WP_CLI::get_runner()->config['debug'];
+
 		if ( false === @chmod( $temp, $mode ) ) {
-			WP_CLI::error( sprintf( "Cannot chmod %s", $temp ) );
+			WP_CLI::error( sprintf( "Cannot chmod %s", $temp ), ! $debug );
+
+			if ( $debug ) {
+				print_r( error_get_last() );
+
+				exit( 1 );
+			}
 		}
 
 		class_exists( '\cli\Colors' ); // this autoloads \cli\Colors - after we move the file we no longer have access to this class
 
 		if ( false === @rename( $temp, $old_phar ) ) {
-			WP_CLI::error( sprintf( "Cannot move %s to %s", $temp, $old_phar ) );
+			WP_CLI::error( sprintf( "Cannot move %s to %s", $temp, $old_phar ), ! $debug );
+
+			if ( $debug ) {
+				print_r( error_get_last() );
+
+				exit( 1 );
+			}
 		}
 
 		WP_CLI::success( sprintf( 'Updated WP-CLI to %s', $newest['version'] ) );
