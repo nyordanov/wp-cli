@@ -132,7 +132,24 @@ class CLI_Command extends WP_CLI_Command {
 	 */
 	public function update( $_, $assoc_args ) {
 		if ( ! Utils\inside_phar() ) {
-			WP_CLI::error( "You can only self-update Phar files." );
+			WP_CLI::error( "You can only self-update Phar files.", false );
+
+			if ( file_exists( WP_CLI_ROOT . '/.git' ) && is_dir( WP_CLI_ROOT . '/.git' ) ) {
+				WP_CLI::confirm( "We have detected a git install. Attempt to pull most recent commits?" );
+
+				$process = WP_CLI\Process::create( "git pull" );
+				$result = $process->run();
+
+				if ( 0 !== $result->return_code ) {
+					$multi_line = explode( PHP_EOL, $result->stderr );
+					WP_CLI::error_multi_line( $multi_line );
+					WP_CLI::error( 'Pull failed.' );
+				} else {
+					WP_CLI::error( 'Pulled.' );
+				}
+			}
+
+			exit( 1 );
 		}
 
 		$old_phar = realpath( $_SERVER['argv'][0] );
